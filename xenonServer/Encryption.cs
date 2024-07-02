@@ -10,50 +10,66 @@ namespace xenonServer
 {
     class Encryption
     {
-        public static byte[] Encrypt(byte[] data, byte[] Key)
+        /// <summary>
+        /// 使用AES加密算法加密数据。
+        /// </summary>
+        /// <param name="data">要加密的数据。</param>
+        /// <param name="key">加密密钥。</param>
+        /// <returns>加密后的数据。</returns>
+        public static byte[] Encrypt(byte[] data, byte[] key)
         {
-            byte[] encrypted;
-            byte[] IV = new byte[16];
+            // 初始化向量为16字节的零数组，对于每次加密应该是唯一的，但这里为了简化示例使用了固定值。
+            byte[] iv = new byte[16];
+
             using (Aes aesAlg = Aes.Create())
             {
-                aesAlg.Key = Key;
-                aesAlg.IV = IV;
-                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+                aesAlg.Key = key;
+                aesAlg.IV = iv;
+
+                // 使用aesAlg的Key和IV创建加密器对象
+                using (ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV))
                 using (MemoryStream msEncrypt = new MemoryStream())
+                using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                 {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                    {
-                        csEncrypt.Write(data, 0, data.Length);
-                        csEncrypt.FlushFinalBlock();
-                        encrypted = msEncrypt.ToArray();
-                    }
+                    // 写入加密后的数据到内存流
+                    csEncrypt.Write(data, 0, data.Length);
+                    csEncrypt.FlushFinalBlock();
+
+                    // 返回加密后的数据
+                    return msEncrypt.ToArray();
                 }
-                encryptor.Dispose();
             }
-            return encrypted;
         }
 
-        public static byte[] Decrypt(byte[] data, byte[] Key)
+        /// <summary>
+        /// 使用AES解密算法解密数据。
+        /// </summary>
+        /// <param name="data">要解密的数据。</param>
+        /// <param name="key">解密密钥。</param>
+        /// <returns>解密后的数据。</returns>
+        public static byte[] Decrypt(byte[] data, byte[] key)
         {
-            byte[] IV = new byte[16];
-            byte[] decrypted;
+            // 初始化向量为16字节的零数组，对于每次解密应该是唯一的，但这里为了简化示例使用了固定值。
+            byte[] iv = new byte[16];
+
             using (Aes aesAlg = Aes.Create())
             {
-                aesAlg.Key = Key;
-                aesAlg.IV = IV;
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-                using (MemoryStream ms = new MemoryStream())
+                aesAlg.Key = key;
+                aesAlg.IV = iv;
+
+                // 使用aesAlg的Key和IV创建解密器对象
+                using (ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV))
+                using (MemoryStream msDecrypt = new MemoryStream())
+                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Write))
                 {
-                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write))
-                    {
-                        cs.Write(data, 0, data.Length);
-                        cs.FlushFinalBlock();
-                        decrypted = ms.ToArray();
-                    }
+                    // 写入解密后的数据到内存流
+                    csDecrypt.Write(data, 0, data.Length);
+                    csDecrypt.FlushFinalBlock();
+
+                    // 返回解密后的数据
+                    return msDecrypt.ToArray();
                 }
-                decryptor.Dispose();
             }
-            return decrypted;
         }
     }
 }

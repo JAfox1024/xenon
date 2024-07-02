@@ -4,110 +4,105 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Net.NetworkInformation;
 
 namespace xenonServer
 {
-    class Listener
+    public class TcpListenerManager
     {
-        public Dictionary<int, _listener> listeners = new Dictionary<int, _listener>();
-        private Func<Socket, Task> ConnectCallBack;
+        public Dictionary<int, TcpPortListener> Listeners { get; } = new Dictionary<int, TcpPortListener>();
+        private readonly Func<Socket, Task> _connectCallback;
 
-        public Listener(Func<Socket, Task> _ConnectCallBack)
+        public TcpListenerManager(Func<Socket, Task> connectCallback)
         {
-            ConnectCallBack = _ConnectCallBack;
+            _connectCallback = connectCallback;
         }
 
-        public bool PortInUse(int port)
+        public bool IsPortInUse(int port)
         {
-            IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-            IPEndPoint[] ipEndPoints = ipProperties.GetActiveTcpListeners();
-            foreach (IPEndPoint endPoint in ipEndPoints)
-            {
-                if (endPoint.Port == port)
-                {
-                    return true;
-                }
-            }
-            return false;
+            var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+            return ipProperties.GetActiveTcpListeners().Any(endPoint => endPoint.Port == port);
         }
 
         public void CreateListener(int port)
         {
-            if (PortInUse(port))
+            if (IsPortInUse(port))
             {
-                MessageBox.Show("That port is currently in use!");
-            }
-            else
-            {
-                if (!listeners.ContainsKey(port))
-                {
-                    listeners[port] = new _listener(port);
-                }
-                try
-                {
-                    listeners[port].StartListening(ConnectCallBack);
-                }
-                catch
-                {
-                    listeners[port].StopListening();
-                    MessageBox.Show("There was an error using this port!");
-                }
+                Console.WriteLine("当前端口已占用!");
+                return;
             }
 
+            if (!Listeners.ContainsKey(port))
+            {
+                Listeners[port] = new TcpPortListener(port);
+            }
+
+            try
+            {
+                Listeners[port].StartListening(_connectCallback);
+            }
+            catch (Exception ex)
+            {
+                Listeners[port].StopListening();
+                Console.WriteLine($"端口监听异常: {ex.Message}");
+            }
         }
 
         public void StopListener(int port)
         {
-            listeners[port].StopListening();
+            if (Listeners.ContainsKey(port))
+            {
+                Listeners[port].StopListening();
+            }
         }
     }
 
-    class _listener
+    public class TcpPortListener
     {
-        private Socket listener;
-        private int port;
-        public bool listening=false;
+        private Socket _listener;
+        private readonly int _port;
+        public bool IsListening { get; private set; }
 
-        public _listener(int _port)
+        public TcpPortListener(int port)
         {
-            port = _port;
+            _port = port;
         }
 
-        public async Task StartListening(Func<Socket, Task> connectCallBack)
+        public async Task StartListening(Func<Socket, Task> connectCallback)
         {
-            IPAddress ipAddress = IPAddress.Any;
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, port);
-            listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            var ipAddress = IPAddress.Any;
+            var localEndPoint = new IPEndPoint(ipAddress, _port);
+            _listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            listener.Bind(localEndPoint);
-            listener.Listen(100);
-            listening = true;
-            while (true)
+            _listener.Bind(localEndPoint);
+            _listener.Listen(100);
+            IsListening = true;
+
+            while (IsListening)
             {
                 try
                 {
-                    Socket handler = await listener.AcceptAsync();
-                    connectCallBack(handler);
+                    var handler = await _listener.AcceptAsync();
+                    await connectCallback(handler);
                 }
                 catch (ObjectDisposedException)
                 {
+                    // Listener has been stopped
                     break;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine($"连接异常: {e.Message}");
                 }
             }
         }
 
         public void StopListening()
         {
-            listening= false;
-            try { listener.Shutdown(SocketShutdown.Both); } catch { }
-            try { listener.Close(); } catch { }
-            try { listener.Dispose(); } catch { }
+            IsListening = false;
+            try { _listener.Shutdown(SocketShutdown.Both); } catch { }
+            try { _listener.Close(); } catch { }
+            try { _listener.Dispose(); } catch { }
         }
     }
 }
