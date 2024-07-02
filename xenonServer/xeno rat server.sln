@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.33328.57
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xeno rat server", "xeno rat server.csproj", "{06B2B14A-CE87-41C0-A77A-2644FE3231C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xenonServer", "xenonServer.csproj", "{06B2B14A-CE87-41C0-A77A-2644FE3231C7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xenonClient", "..\xenonClient\xenonClient.csproj", "{310FC5BE-6F5E-479C-A246-6093A39296C0}"
 EndProject

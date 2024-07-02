@@ -14,7 +14,7 @@ namespace Plugin
     {
         public async Task Run(Node node) 
         {
-            await node.SendAsync(new byte[] { 3 });//indicate that it has connected
+            await node.SendAsync(new byte[] { 3 });
             Application.Run(new ChatForm(node));
         }
     }

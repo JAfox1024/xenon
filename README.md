@@ -5,25 +5,25 @@
 <img src="./logo.png" width=200 alt="Xeno-RAT Logo"/>
 </p>
 
-Xeno Rat is a remote access tool (RAT) that is used to control a computer remotely. It is written in C# and is compatible with Windows 10, 11. It is meant to stable, completely open source, easy to use and has a lot of features.
+xenonis a remote access tool (RAT) that is used to control a computer remotely. It is written in C# and is compatible with Windows 10, 11. It is meant to stable, completely open source, easy to use and has a lot of features.
 
 </span>
 
-## What Sets Xeno Rat Apart
+## What Sets xenonApart
 
-Xeno Rat stands out from the crowd for several reasons:
+xenonstands out from the crowd for several reasons:
 
-- **HVNC (Hidden Virtual Network Computing)**: Xeno Rat offers HVNC, which is typically a paid feature in other RATs, but here, it's freely available to enhance your remote access experience.
+- **HVNC (Hidden Virtual Network Computing)**: xenonoffers HVNC, which is typically a paid feature in other RATs, but here, it's freely available to enhance your remote access experience.
 
 - **Live Microphone**: Enjoy real-time audio surveillance with Xeno Rat, which provides a live microphone feature.
 
-- **Socks5 Reverse Proxy**: Xeno Rat includes a Socks5 reverse proxy, allowing you to bypass network restrictions and access remote systems with ease.
+- **Socks5 Reverse Proxy**: xenonincludes a Socks5 reverse proxy, allowing you to bypass network restrictions and access remote systems with ease.
 
-- **Regular Updates and Much More**: We are committed to keeping Xeno Rat up to date and continually improving its features and functionality to better meet your needs.
+- **Regular Updates and Much More**: We are committed to keeping xenonup to date and continually improving its features and functionality to better meet your needs.
 
-- **Built Completely from Scratch**: Xeno Rat is developed entirely from scratch, ensuring a unique and tailored approach to remote access tools.
+- **Built Completely from Scratch**: xenonis developed entirely from scratch, ensuring a unique and tailored approach to remote access tools.
 
-## Xeno Rat Builder
+## xenonBuilder
 
 Inside the Xeno-Rat Server, head over to the "Builder" tab, select your custom settings and click "Build". Then select a name and a location to save the file. The file will be saved as a .exe file and will be ready to use.
 
