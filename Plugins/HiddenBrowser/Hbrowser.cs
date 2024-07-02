@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using xeno_rat_client;
+using xenonClient;
 using Microsoft.Win32;
 using System.Net.Sockets;
 using System.Diagnostics;

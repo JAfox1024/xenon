@@ -46,9 +46,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\xeno rat client\xeno rat client.csproj">
+    <ProjectReference Include="..\..\xenonClient\xenonClient.csproj">
       <Project>{310FC5BE-6F5E-479C-A246-6093A39296C0}</Project>
-      <Name>xeno rat client</Name>
+      <Name>xenonClient</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
