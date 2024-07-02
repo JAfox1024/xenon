@@ -102,7 +102,7 @@ namespace xenonServer.Forms
             if (id != -1)
             {
                 await Utils.Type2returnAsync(SubSubNode);
-                byte[] a = SubSubNode.sock.IntToBytes(id);
+                byte[] a = SubSubNode.Sock.IntToBytes(id);
                 await client.SendAsync(a);
                 byte[] found = await client.ReceiveAsync();
                 if (found == null || found[0] == 0)
@@ -290,8 +290,8 @@ namespace xenonServer.Forms
             }
             killnodes.Add(subnode);
             await subnode.SendAsync(Encoding.UTF8.GetBytes(dest_addr));
-            await subnode.SendAsync(subnode.sock.IntToBytes(dest_port));
-            await subnode.SendAsync(subnode.sock.IntToBytes(ConnectTimeout));
+            await subnode.SendAsync(subnode.Sock.IntToBytes(dest_port));
+            await subnode.SendAsync(subnode.Sock.IntToBytes(ConnectTimeout));
             byte[] recv_msg_bytes = await subnode.ReceiveAsync();
             if (recv_msg_bytes == null) 
             {
@@ -353,7 +353,7 @@ namespace xenonServer.Forms
                 {
                     await Task.WhenAny(
                            Task.Run(() => client_sock.Poll(1000, SelectMode.SelectRead)),
-                           Task.Run(() => subnode.sock.sock.Poll(1000, SelectMode.SelectRead))
+                           Task.Run(() => subnode.Sock.sock.Poll(1000, SelectMode.SelectRead))
                        );
                     if (client_sock.Available > 0)
                     {
@@ -368,7 +368,7 @@ namespace xenonServer.Forms
 
                     }
 
-                    if (subnode.sock.sock.Available > 0)
+                    if (subnode.Sock.sock.Available > 0)
                     {
                         byte[] data = await subnode.ReceiveAsync();
                         if ((await client_sock.SendAsync(new ArraySegment<byte>(data), SocketFlags.None)) == 0)

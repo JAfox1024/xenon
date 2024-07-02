@@ -8,12 +8,12 @@ using System.Net.NetworkInformation;
 
 namespace xenonServer
 {
-    public class TcpListenerManager
+    public class Listener
     {
         public Dictionary<int, TcpPortListener> Listeners { get; } = new Dictionary<int, TcpPortListener>();
         private readonly Func<Socket, Task> _connectCallback;
 
-        public TcpListenerManager(Func<Socket, Task> connectCallback)
+        public Listener(Func<Socket, Task> connectCallback)
         {
             _connectCallback = connectCallback;
         }

@@ -43,7 +43,7 @@ namespace xenonServer
         private static int currentCount = 0;
         private static byte[] key = new byte[32] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 };
         private static string string_key = "1234";
-        private static int ListviewItemCount_old = 6;
+       // private static int ListviewItemCount_old = 6;
         private static int ListviewItemCount = 7;
         private Dictionary<string, string[]> Commands = new Dictionary<string, string[]>();
         private List<string> OnConnectTasks = new List<string>();
@@ -388,7 +388,7 @@ namespace xenonServer
 
             }
             ListViewItem lvi = new ListViewItem();
-            ListViewItem item=null;
+           // ListViewItem item=null;
             lvi.Tag = type0node;
 
             string ipAddress = type0node.GetIp();
@@ -581,9 +581,9 @@ namespace xenonServer
             List<int> ports = new List<int>();
             if (ListeningHandler != null)
             {
-                foreach (int i in ListeningHandler.listeners.Keys)
+                foreach (int i in ListeningHandler.Listeners.Keys)
                 {
-                    if (ListeningHandler.listeners[i].listening)
+                    if (ListeningHandler.Listeners[i].IsListening)
                     {
                         ports.Add(i);
                     }
@@ -631,7 +631,7 @@ namespace xenonServer
                 foreach (int i in ports)
                 {
                     string string_port = i.ToString();
-                    if (ListeningHandler.PortInUse(i))
+                    if (ListeningHandler.IsPortInUse(i))
                     {
                         MessageBox.Show($"The port {string_port} is currently in use! Press ok to skip.");
                         continue;
@@ -684,7 +684,7 @@ namespace xenonServer
                 MessageBox.Show("That is not a valid port number!");
                 return;
             }
-            if (ListeningHandler.PortInUse(port)) 
+            if (ListeningHandler.IsPortInUse(port)) 
             {
                 MessageBox.Show("That port is currently in use!");
                 return;

@@ -144,9 +144,9 @@ namespace xenonServer
             {
                 int setID = subnode.Parent.SubNodeIdCount;
                 subnode.Parent.SubNodeIdCount += 1;
-                byte[] id = subnode.sock.IntToBytes(setID);
+                byte[] id = subnode.Sock.IntToBytes(setID);
                 byte[] opcode = new byte[] { 2 };
-                byte[] data = subnode.sock.Concat(opcode, id);
+                byte[] data = subnode.Sock.Concat(opcode, id);
                 await subnode.SendAsync(data);
                 await subnode.ReceiveAsync();
                 return setID;

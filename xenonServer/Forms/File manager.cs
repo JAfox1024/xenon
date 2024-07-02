@@ -322,7 +322,7 @@ namespace xenonServer.Forms
             if (id != -1)
             {
                 await Utils.Type2returnAsync(SubSubNode);
-                byte[] a = SubSubNode.sock.IntToBytes(id);
+                byte[] a = SubSubNode.Sock.IntToBytes(id);
                 await client.SendAsync(a);
                 byte[] found =await client.ReceiveAsync();
                 if (found == null || found[0] == 0)
@@ -521,12 +521,12 @@ namespace xenonServer.Forms
             bool worked = (await client.ReceiveAsync())[0]==1;
             if (worked)
             {
-                int dirslength = client.sock.BytesToInt(await client.ReceiveAsync());
+                int dirslength = client.Sock.BytesToInt(await client.ReceiveAsync());
                 for (int _=0;_< dirslength; _++) 
                 {
                     data.Directories.Add(Encoding.UTF8.GetString(await client.ReceiveAsync()));
                 }
-                int fileslength = client.sock.BytesToInt(await client.ReceiveAsync());
+                int fileslength = client.Sock.BytesToInt(await client.ReceiveAsync());
                 for (int _ = 0; _ < fileslength; _++)
                 {
                     data.Files.Add(Encoding.UTF8.GetString(await client.ReceiveAsync()));

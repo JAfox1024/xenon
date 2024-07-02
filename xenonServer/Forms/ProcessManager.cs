@@ -150,7 +150,7 @@ namespace xenonServer.Forms
         {
             try 
             {
-                await client.SendAsync(client.sock.IntToBytes(pid));
+                await client.SendAsync(client.Sock.IntToBytes(pid));
                 MessageBox.Show("sent the kill command");
             } 
             catch 

